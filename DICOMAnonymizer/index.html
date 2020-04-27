@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Anonymization of DICOM files</title>
+        <link rel="stylesheet" type="text/css" href="style.css"> </head>
+    <body>
+        <h2>Anonymization of DICOM files</h2>
+        <p>Use "Choose file" button to select a DICOM file and "Process File" button to start anonymization.</p> 
+        <form id="upload" action="POST">
+          <p>
+            <input type="file" id="dicom" />
+          </p>
+          <p><input type="submit" value="Process file"/></p>
+        </form>
+        <table class="blueTable" style="width:100%" border="1">
+            <tr>
+                <th>Protocol</th>
+                <th>Response</th>
+            </tr>
+            <tr>
+                <td valign="top">
+                    <pre id="protocol"></pre>
+                </td>
+                <td valign="top">
+                    <pre id="response"></pre>
+                </td>
+            </tr>
+        </table>
+        <br/>
+        <div id="errors" style="color:red"></div>
+        <br/>
+        <p>After file processing results will be shown in the table below. Left column shows list of DICOM tags
+            in the file before anonymization. Right column shows list of DICOM tags after anonymization.
+            Confidential tags are shown in red.
+        </p>
+        <br/>
+        <table class="blueTable" style="width:100%">
+            <tr>
+                <th>DICOM tags before anonymization</th>
+                <th>DICOM tags after anonymyzation</th>
+            </tr>
+            <tr>
+                <td valign="top">
+                    <pre id="before"></pre>
+                </td>
+                <td valign="top">
+                    <pre id="after"></pre>
+                </td>
+            </tr>
+        </table>
+        <script src="wrap.js"></script>
+    <script src="DICOMAnonymizer.js"></script>
+    </script>
+    </body>
+</html>
