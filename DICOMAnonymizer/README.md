@@ -5,7 +5,8 @@ WebAssembly based DICOM file anonymization. The software strips confidential tag
 ## Prerequisites
 - Emscripten SDK
 - cmake
-## To build a WebAssembly 
+- docker 
+## How to build the WebAssembly on a Linux machine
 - Edit build.sh file and define the correct path to the Emscripten toolkit file. It is specified at the beginnig of the file in variable TOOL_CHAIN_PATH.
 - Run script build.sh
 ```
@@ -13,6 +14,12 @@ cd DICOMANONYMIZER
 ./build.sh
 ```
 - Distribution files are copied to the "dist" subfolder of the repository root directory.
+## How to build the WebAssembly with docker
+```
+cd covid19-prototype
+docker pull trzeci/emscripten
+docker run -it --rm -v $(pwd):/src  trzeci/emscripten ./DICOMAnonymizer/build.sh
+```
 ## WebAssembly distribution files.
 - index.html: HTML file for the WEB page.
 - style.cs: Style sheet for the WEB page.
@@ -120,4 +127,6 @@ Parameters:
 - Repository Parsing DICOM using WebAssembly (https://github.com/jodogne/wasm-dicom-parser)
 - Emscripten framework
 - cmake
+- docker
+- docker container trzeci/emscripten
 

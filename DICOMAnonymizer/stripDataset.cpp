@@ -18,7 +18,7 @@ struct dcmtagkey_hash
 // Annex E (Attribute Confidentiality Profiles)
 // of the dicom specification.
 // See http://dicom.nema.org/Medical/Dicom/2014a/output/chtml/part15/chapter_E.html
-static const std::unordered_set<DcmTagKey, dcmtagkey_hash> confidentialTags =
+static const DcmTagKey confidentialTagList[] = 
 {
     DCM_AccessionNumber,
     DcmTagKey(0x18,0x4000), //DCM_RETIRED_AcquisitionComments,
@@ -292,6 +292,9 @@ static const std::unordered_set<DcmTagKey, dcmtagkey_hash> confidentialTags =
     DCM_VisitComments
 };
 
+static const std::unordered_set<DcmTagKey, dcmtagkey_hash> confidentialTags
+                    (std::begin(confidentialTagList), std::end(confidentialTagList));
+
 
 // Checks if a DICOM tag key belongs to
 // confidential data or not
@@ -358,8 +361,9 @@ static OFCondition stripPrivateTags(
     }
     // delete collected keys
     int countDeleted(0);
-    for(const auto& key : keysToDelete)
+    for(std::list<DcmTagKey>::iterator it=keysToDelete.begin(); it!=keysToDelete.end(); it++)
     {
+        DcmTagKey key = *it;
         OFCondition result = item->findAndDeleteElement(key, true, true);
         if(result.good())
         {

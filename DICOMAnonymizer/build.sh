@@ -1,6 +1,8 @@
 #!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $DIR
 BUILD_DIR=./build
-TOOL_CHAIN_PATH=/home/stas/projects/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+TOOL_CHAIN_PATH=/emsdk_portable/emscripten/tag-1.39.4/cmake/Modules/Platform/Emscripten.cmake
 if [ ! -d "$BUILD_DIR" ]
 then
     mkdir "$BUILD_DIR"
