@@ -429,3 +429,4 @@ OFCondition stripPrivateTags(
     }
     return stripPrivateTags(metainfo, tracingLevel);
 }
+

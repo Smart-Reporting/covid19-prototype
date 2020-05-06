@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include "utils.h"
 #include "stripDataset.h"
+#include <dcmtk/dcmdata/dcdeftag.h>
+#include <iostream>
 
 size_t getFileSize(const std::string& filePath)
 {
@@ -138,4 +140,65 @@ TEST(Anonymize, stripPrivateTags)
     ASSERT_TRUE(dicom2);
     EXPECT_FALSE(hasConfidentialInfo(dicom2->getDataset()));
     remove(outputImagePath.c_str());
+}
+
+TEST(Anonymize, generateDICOMId)
+{
+    {
+        std::string id1 = generateDICOMId(DCM_StudyInstanceUID);
+        std::string id2 = generateDICOMId(DCM_StudyInstanceUID);
+        EXPECT_NE(id1,id2);
+        EXPECT_GT(id1.length(),0);
+        EXPECT_GT(id2.length(),0);
+    }
+    {
+        std::string id1 = generateDICOMId(DCM_SeriesInstanceUID);
+        std::string id2 = generateDICOMId(DCM_SeriesInstanceUID);
+        EXPECT_NE(id1,id2);
+        EXPECT_GT(id1.length(),0);
+        EXPECT_GT(id2.length(),0);
+    }
+    {
+        std::string id1 = generateDICOMId(DCM_SOPInstanceUID);
+        std::string id2 = generateDICOMId(DCM_SOPInstanceUID);
+        EXPECT_NE(id1,id2);
+        EXPECT_GT(id1.length(),0);
+        EXPECT_GT(id2.length(),0);
+    }
+    {
+        std::string id1 = generateDICOMId(DCM_PatientID);
+        std::string id2 = generateDICOMId(DCM_PatientID);
+        EXPECT_NE(id1,id2);
+        EXPECT_GT(id1.length(),0);
+        EXPECT_GT(id2.length(),0);
+    }
+}
+
+TEST(Anonymize, modifyDataset)
+{
+    typedef std::tuple<DcmTagKey,std::string> KeyVal;
+    const std::string imagePath = getTestImagePath("US-MONO2-8-8x-execho.dcm");
+    auto file = loadDICOMFile(imagePath);
+    DcmDataset* dataset = file->getDataset();
+    DcmTagKey keys[] = {DCM_StudyInstanceUID, DCM_SeriesInstanceUID, DCM_SOPInstanceUID, DCM_PatientID};
+    std::list<KeyVal> tagList;
+
+    const int numKeys = sizeof(keys)/sizeof(keys[0]);
+    for(int keyIndex=0; keyIndex<numKeys; keyIndex++)
+    {
+        auto key = keys[keyIndex];
+        tagList.push_back(KeyVal(key,generateDICOMId(key)));
+    }
+
+    OFCondition res = modifyDataset(dataset, tagList);
+    EXPECT_TRUE(res.good());
+
+    for(auto it = tagList.begin(); it!=tagList.end(); ++it)
+    {
+        auto key = std::get<0>(*it);
+        const std::string& value = std::get<1>(*it);
+        OFString val;
+        dataset->findAndGetOFString(key, val);
+        EXPECT_TRUE(value.compare(val.c_str())==0);
+    }
 }

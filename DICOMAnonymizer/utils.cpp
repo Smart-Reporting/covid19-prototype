@@ -4,6 +4,9 @@
 #include "utils.h"
 #include <dcmtk/dcmdata/dcostrmb.h>
 #include <dcmtk/dcmdata/dcwcache.h>
+#include <dcmtk/dcmdata/dcuid.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
+#include <list>
 
 
 // Use DCMTK to parse a memory buffer containing a DICOM file. This
@@ -51,7 +54,7 @@ OFCondition saveToMemoryBuffer(
     DcmWriteCache cache;
     dicom->transferInit();
     OFCondition res = dicom->write(out, EXS_Unknown,
-        EET_UndefinedLength, &cache, EGL_recalcGL);
+            EET_UndefinedLength, &cache, EGL_recalcGL);
     dicom->transferEnd();
 
     if(res.good())
@@ -65,3 +68,49 @@ OFCondition saveToMemoryBuffer(
     return res;
 }
 
+char* genRandomString(char *s, const int len) {
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < len; ++i) {
+        s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+    s[len] = 0;
+    return s;
+}
+
+std::string generateDICOMId(const DcmTagKey& idKey)
+{
+    char buffer[100] = {0};
+    std::string id;
+    if(idKey==DCM_StudyInstanceUID){
+        id = dcmGenerateUniqueIdentifier(buffer, SITE_STUDY_UID_ROOT);
+    }
+    else if(idKey==DCM_SeriesInstanceUID){
+        id = dcmGenerateUniqueIdentifier(buffer, SITE_SERIES_UID_ROOT);
+    }
+    else if(idKey==DCM_SOPInstanceUID){
+        id = dcmGenerateUniqueIdentifier(buffer, SITE_INSTANCE_UID_ROOT);
+    }
+    else if(idKey==DCM_PatientID){
+        id = genRandomString(buffer, 20);
+    }
+    return id;
+}
+
+OFCondition modifyDataset(DcmItem* item, std::list<std::tuple<DcmTagKey,std::string>> tagList)
+{
+    OFCondition res;
+    for(auto it=tagList.begin(); it!=tagList.end(); ++it)
+    {
+        DcmTagKey key = std::get<0>(*it);
+        const std::string& value = std::get<1>(*it);
+        res = item->putAndInsertString(key, value.c_str(), 1);
+        if(res.bad())
+            return res;
+    }
+    return res;
+}
