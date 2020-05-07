@@ -52,17 +52,19 @@ function printTags(input, parentHtmlTag)
 // saves the dataset in an output buffer.
 // Parameters:
 // input (UInt8Array): content of a DICOM file to be anonymized.
-// output: buffer for output anonymized content. Must be allocated
-//         in the WebAssembly module heap.
-// bufferLen (number): size of the output buffer in bytes.
 // tracingLevel (number): tracing level. Controls output of tracing
 //                        information to the console.
 //                        0: No information
 //                        1: Function call only
 //                        2: Detailed information.  
-function anonymizeFile(input, output, bufferLen, tracingLevel)
+function anonymizeFile(input, tracingLevel)
 {
-    const done = Module.ccall(
+    // Allocate memofy for the output data
+    const newBufferLen = input.byteLength*2;
+    var output = Module._malloc(newBufferLen);
+    var outputData = null;
+
+    const newLen = Module.ccall(
         'anonymizeFile',    // Name of the C++ function
         'number',           // Return value (a Boolean indicating success)
         [                   // The list of arguments
@@ -76,12 +78,50 @@ function anonymizeFile(input, output, bufferLen, tracingLevel)
             input,
             input.byteLength,
             output,
-            bufferLen,
+            newBufferLen,
             tracingLevel
         ]
     );
-    return done;
+    if(newLen>0)
+    {
+        // Put output data to a Uint8Array
+        var tempArray = new Uint8Array(Module.HEAPU8.buffer, output, newLen);
+        outputData = tempArray.slice(0);
+    }
+    Module._free(output);
+    return outputData;
 }
+
+function getFakeId(type)
+{
+    // Allocate memofy for the output data
+    const idMaxLen = 100;
+    var idBuffer = Module._malloc(idMaxLen);
+    var id = null;
+
+    const idLen = Module.ccall(
+        'getFakeId',    // Name of the C++ function
+        'number',           // Return value (a Boolean indicating success)
+        [                   // The list of arguments
+            'number',
+            'number',    
+            'number'
+        ],
+        [                   // The value of the arguments
+            type,
+            idBuffer,
+            idMaxLen
+        ]
+    );
+    if(idLen>0)
+    {
+        // Put output data to a Uint8Array
+        id = Module.UTF8ToString(idBuffer);
+    }
+    Module._free(idBuffer);
+    return id;
+}
+
 // Concatenates a text to the protocol element of the WEB
 // page. Shows result of communication with a DICOM server.
 function updateProtocol(text)
@@ -114,6 +154,18 @@ function sendData(dicomData)
     updateProtocol("Data is sent");
 
 }
+
+// This event is triggered when the user uploads a DICOM file
+document.getElementById('generate').addEventListener('submit', function(e) 
+{
+    document.getElementById("studyid").value = getFakeId(0);
+    document.getElementById("seriesid").value = getFakeId(1);
+    document.getElementById("sopid").value = getFakeId(2);
+    document.getElementById("patientid").value = getFakeId(3);
+    // Prevent the actual uploading of the form
+    e.preventDefault();
+});
+
 // This event is triggered when the user uploads a DICOM file
 document.getElementById('upload').addEventListener('submit', function(e) 
 {
@@ -132,27 +184,20 @@ document.getElementById('upload').addEventListener('submit', function(e)
             var input = new Uint8Array(dicom);
             // Print DICOM tags of received data to the WEB page
             printTags(input, "before");
-            // Allocate memofy for the output data
-            const bytesPerElement = Module.HEAPU8.BYTES_PER_ELEMENT;
-            const newBufferLen = dicom.byteLength*2;
-            var outputBuffer = Module._malloc(newBufferLen*bytesPerElement);
             // Do anonymization
-            var newLen = anonymizeFile(input, outputBuffer, newBufferLen, 1);
-            if (newLen<=0)
+            var output = anonymizeFile(input, 1);
+            if (output==null)
             {
                 alert('Sorry, unable to process the DICOM file');
             }
             else
             {
-                // Put output data to a Uint8Array
-                var output = new Uint8Array(Module.HEAPU8.buffer, outputBuffer, newLen);
                 // Display anonymized info on the WEB page.
                 printTags(output, "after");
-                console.log("Sending " + newLen + " bytes");
+                console.log("Sending " + output.byteLength + " bytes");
                 // Send anonymized content to the orthanc server
                 sendData(output);
             }
-            Module._free(outputBuffer);
         };
         // Instruct JavaScript to load the file as an ArrayBuffer
         reader.readAsArrayBuffer(fileInput.files[0]);

@@ -5,13 +5,38 @@
         <link rel="stylesheet" type="text/css" href="style.css"> </head>
     <body>
         <h2>Anonymization of DICOM files</h2>
-        <p>Use "Choose file" button to select a DICOM file and "Process File" button to start anonymization.</p> 
-        <form id="upload" action="POST">
-          <p>
-            <input type="file" id="dicom" />
-          </p>
-          <p><input type="submit" value="Process file"/></p>
-        </form>
+        <p>Use "Choose file" button to select a DICOM file and "Process File" button to start anonymization.</p>
+        <table>
+            <tr>
+                <td valign="top">
+                    <form id="upload" action="POST">
+                        <p>
+                          <input type="file" id="dicom" />
+                        </p>
+                        <p><input type="submit" value="Process file"/></p>
+                      </form>
+                </td>
+                <td>
+                    <form id="generate" action="POST">
+                        <p>
+                            <label>Study Instance ID:</label><input type="text" id="studyid"/>
+                        </p>
+                        <p>
+                            <label>Series Instance ID:</label><input type="text" id="seriesid"/>
+                        </p>
+                        <p>
+                            <label>SOP Instance ID:</label><input type="text" id="sopid"/>
+                        </p>
+                        <p>
+                            <label>Patient ID:</label><input type="text" id="patientid"/>
+                        </p>
+                        <p>
+                            <input type="submit" value="Generate ids"/></p>
+                        </p>
+                      </form>
+                </td>
+            </tr>
+        </table> 
         <table class="blueTable" style="width:100%" border="1">
             <tr>
                 <th>Protocol</th>

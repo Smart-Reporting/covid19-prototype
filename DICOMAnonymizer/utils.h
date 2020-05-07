@@ -10,6 +10,7 @@
 #include <dcmtk/ofstd/ofcond.h>
 #include <memory>
 #include <list>
+#include <tuple>
 
 // loads DICOM file data from a memory buffer and returns it as an instance of dcmtk file
 OFCondition loadFromMemoryBuffer(const void* buffer, size_t size, std::shared_ptr<DcmFileFormat>& dicom);

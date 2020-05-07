@@ -5,6 +5,7 @@
 #include "stripDataset.h"
 #include "utils.h"
 #include <dcmtk/dcmdata/dcostrmb.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
 
 extern "C" void addTagJS(const char* parentHtmlTag, const char* tag, bool confidential);
 extern "C" void showErrorMessageJS(const char* errorMessage);
@@ -146,4 +147,30 @@ extern "C" size_t EMSCRIPTEN_KEEPALIVE anonymizeFile(
     }
     return written;
 }
+
+extern "C" int EMSCRIPTEN_KEEPALIVE getFakeId(
+    int type,      // Id type: 0: studyId, 1: series id, 2: sop id, 3: patient id
+    char* id,      // Buffer for id
+    int buffLen    // Length of id buffer
+    )
+{
+    std::string strId;
+    if(type==0){
+        strId = generateDICOMId(DCM_StudyInstanceUID);
+    }
+    else if(type==1){
+        strId = generateDICOMId(DCM_SeriesInstanceUID);
+    }
+    else if(type==2){
+        strId = generateDICOMId(DCM_SOPInstanceUID);
+    }
+    else if(type==3){
+        strId = generateDICOMId(DCM_PatientID);
+    }
+    if(!strId.empty()){
+        strcpy(id, strId.c_str());
+    }
+    return (int)strlen(id);
+}
+
 #endif
