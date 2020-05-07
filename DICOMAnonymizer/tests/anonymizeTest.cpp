@@ -176,17 +176,20 @@ TEST(Anonymize, generateDICOMId)
 
 TEST(Anonymize, modifyDataset)
 {
-    typedef std::tuple<DcmTagKey,std::string> KeyVal;
+    typedef std::tuple<DcmTag,std::string> KeyVal;
     const std::string imagePath = getTestImagePath("US-MONO2-8-8x-execho.dcm");
     auto file = loadDICOMFile(imagePath);
     DcmDataset* dataset = file->getDataset();
     DcmTagKey keys[] = {DCM_StudyInstanceUID, DCM_SeriesInstanceUID, DCM_SOPInstanceUID, DCM_PatientID};
+    DcmVR vrs[] = {DcmVR(EVR_UI), DcmVR(EVR_UI), DcmVR(EVR_UI), DcmVR(EVR_LO)};
     std::list<KeyVal> tagList;
 
     const int numKeys = sizeof(keys)/sizeof(keys[0]);
     for(int keyIndex=0; keyIndex<numKeys; keyIndex++)
     {
-        auto key = keys[keyIndex];
+        DcmTagKey key = keys[keyIndex];
+        DcmVR vr = vrs[keyIndex];
+        DcmTag tag(key, vr);
         tagList.push_back(KeyVal(key,generateDICOMId(key)));
     }
 

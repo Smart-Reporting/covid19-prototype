@@ -101,16 +101,25 @@ std::string generateDICOMId(const DcmTagKey& idKey)
     return id;
 }
 
-OFCondition modifyDataset(DcmItem* item, std::list<std::tuple<DcmTagKey,std::string>> tagList)
+OFCondition modifyDataset(DcmItem* item, std::list<std::tuple<DcmTag,std::string>> tagList, int tracingLevel)
 {
     OFCondition res;
     for(auto it=tagList.begin(); it!=tagList.end(); ++it)
     {
-        DcmTagKey key = std::get<0>(*it);
+        DcmTag tag = std::get<0>(*it);
         const std::string& value = std::get<1>(*it);
-        res = item->putAndInsertString(key, value.c_str(), 1);
+        if(tracingLevel>1)
+        {
+            std::cout << tag.toString().c_str() << ":" << value << std::endl;
+        }
+        res = item->putAndInsertString(tag, value.c_str(), 1);
         if(res.bad())
+        {
+            std::cout << "Error by assigning new value to tag" 
+                << tag.toString().c_str() << ":" << value << std::endl;
+            std::cout << res.text() << std::endl;
             return res;
+        }
     }
     return res;
 }

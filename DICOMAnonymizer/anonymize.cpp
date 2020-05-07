@@ -102,14 +102,23 @@ extern "C" size_t EMSCRIPTEN_KEEPALIVE anonymizeFile(
     size_t inputLength,     // length of the input buffet
     void* outputData,       // Output buffer for saving of anonymized data
     size_t outputLength,    // Size of the output buffer.
+    char* studyId,          // Study id
+    char* seriesId,         // Series id
+    char* SOPId,            // SOP id
+    char* patientId,        // Patient id
     int tracingLevel        // 0, 1, or 2: tracing level
     )
 {
+    typedef std::tuple<DcmTag,std::string> KeyVal;
     size_t written = 0;
     if(tracingLevel>0)
     {
         std::cout << "---------anonymizeFile Begin. Received bytes: " << inputLength << std::endl;
         std::cout << "Output buffer size: " << outputLength << std::endl;
+        std::cout << "Study id: " << studyId << std::endl;
+        std::cout << "Series id: " << seriesId << std::endl;
+        std::cout << "SOP id: " << SOPId << std::endl;
+        std::cout << "Patient id: " << patientId << std::endl;
     }
     if(inputData && inputLength)
     {
@@ -121,8 +130,48 @@ extern "C" size_t EMSCRIPTEN_KEEPALIVE anonymizeFile(
             {
                 std::cout << "DICOM file successfuly loaded" << std::endl;
             }
-            stripPrivateTags(dicom, tracingLevel);
-            res = saveToMemoryBuffer(dicom, outputData, outputLength, written);
+            // strip confedential tags
+            res = stripPrivateTags(dicom, tracingLevel);
+            if(res.bad())
+            {
+                std::cout << "Error by removing of confidential tags:" << res.text() << std::endl;
+            }
+            else if(tracingLevel>0)
+            {
+                std::cout << "Confidential tags are removed." << std::endl;
+            }
+            if(res.good())
+            {
+                // replace important DICOM ids
+                std::list<KeyVal> tagList;
+                tagList.push_back(KeyVal(DcmTag(DCM_StudyInstanceUID,DcmVR(EVR_UI)), studyId));
+                tagList.push_back(KeyVal(DcmTag(DCM_SeriesInstanceUID,DcmVR(EVR_UI)), seriesId));
+                tagList.push_back(KeyVal(DcmTag(DCM_SOPInstanceUID,DcmVR(EVR_UI)), SOPId));
+                tagList.push_back(KeyVal(DcmTag(DCM_PatientID,DcmVR(EVR_LO)), patientId));
+                res = modifyDataset(dicom->getDataset(), tagList, tracingLevel);
+                if(res.bad())
+                {
+                    std::cout << "Error by modification of the dataset:" << res.text() << std::endl;
+                }
+                else if(tracingLevel>0)
+                {
+                    std::cout << "Modification is succesful" << std::endl;
+                }
+            }
+            if(res.good())
+            {
+                // serialize the dataset to the memory buffer
+                res = saveToMemoryBuffer(dicom, outputData, outputLength, written);
+                if(res.bad())
+                {
+                    std::cout << "Error by dataset serialization:" << res.text() << std::endl;
+                }
+                else if(tracingLevel>0)
+                {
+                    std::cout << "Dataset serialization is succesful" << std::endl;
+                }
+            }
+            // report error
             if(res.bad())
             {
                 written = 0;

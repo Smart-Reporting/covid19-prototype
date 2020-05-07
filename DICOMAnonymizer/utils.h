@@ -24,6 +24,6 @@ inline OFCondition dcmtkError(const char* errorMessage)
 // generates fake DICOM ids
 std::string generateDICOMId(const DcmTagKey& idKey);
 // replases overwrites DICOM tags with new string values
-OFCondition modifyDataset(DcmItem* item, std::list<std::tuple<DcmTagKey,std::string>> tagList);
+OFCondition modifyDataset(DcmItem* item, std::list<std::tuple<DcmTag,std::string>> tagList, int tracingLevel=0);
 
 #endif //DICOMANONYMIZER_UTILS_H

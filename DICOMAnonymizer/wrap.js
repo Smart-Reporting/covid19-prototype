@@ -52,12 +52,16 @@ function printTags(input, parentHtmlTag)
 // saves the dataset in an output buffer.
 // Parameters:
 // input (UInt8Array): content of a DICOM file to be anonymized.
+// studyId: string with fake study id to replace the original id
+// seriesId: string with fake series id to replace the original id
+// sopId: string with fake sop id to replace the original id
+// patientId: string with fake patient id to replace the original id
 // tracingLevel (number): tracing level. Controls output of tracing
 //                        information to the console.
 //                        0: No information
 //                        1: Function call only
 //                        2: Detailed information.  
-function anonymizeFile(input, tracingLevel)
+function anonymizeFile(input, studyId, seriesId, sopId, patientId, tracingLevel)
 {
     // Allocate memofy for the output data
     const newBufferLen = input.byteLength*2;
@@ -72,6 +76,10 @@ function anonymizeFile(input, tracingLevel)
             'number',
             'number',
             'number',
+            'string',
+            'string',
+            'string',
+            'string',
             'number'
         ],
         [                   // The value of the arguments
@@ -79,6 +87,10 @@ function anonymizeFile(input, tracingLevel)
             input.byteLength,
             output,
             newBufferLen,
+            studyId,
+            seriesId,
+            sopId,
+            patientId,
             tracingLevel
         ]
     );
@@ -184,8 +196,13 @@ document.getElementById('upload').addEventListener('submit', function(e)
             var input = new Uint8Array(dicom);
             // Print DICOM tags of received data to the WEB page
             printTags(input, "before");
+            // collect new ids 
+            studyId = document.getElementById("studyid").value
+            seriesId = document.getElementById("seriesid").value
+            sopId = document.getElementById("sopid").value
+            patientId = document.getElementById("patientid").value
             // Do anonymization
-            var output = anonymizeFile(input, 1);
+            var output = anonymizeFile(input, studyId, seriesId, sopId, patientId, 1);
             if (output==null)
             {
                 alert('Sorry, unable to process the DICOM file');
