@@ -3,6 +3,7 @@ project(DICOMAnonymizer)
 
 set(WA_BUILD ON)
 string(FIND "${CMAKE_TOOLCHAIN_FILE}" "Emscripten" EMPOS)
+set(CMAKE_CXX_STANDARD 14)
 if (${EMPOS} LESS 0)
   message("C++ native compilation")
   set(WA_BUILD OFF)
