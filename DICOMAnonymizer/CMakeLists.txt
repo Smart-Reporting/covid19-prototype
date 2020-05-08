@@ -17,13 +17,15 @@ if (WA_BUILD)
   set(WASM_FLAGS "-s WASM=1")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WASM_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WASM_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString']  --js-library ${CMAKE_SOURCE_DIR}/library.js")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString']  --js-library ${CMAKE_SOURCE_DIR}/src/library.js")
   set(CONFIG_DIR ${CMAKE_SOURCE_DIR}/config_wa)
 else()
   set(CONFIG_DIR ${CMAKE_SOURCE_DIR}/config_cpp)
 endif()
 
 set(DCMTK_SOURCES_DIR "dcmtk-3.6.0")
+set(TARGET_DIRECTORY ${CMAKE_SOURCE_DIR}/dist)
+file(MAKE_DIRECTORY ${TARGET_DIRECTORY})
 
 add_definitions(
   -DHAVE_CONFIG_H=1
@@ -202,11 +204,11 @@ else()
 endif()
 
 set(SOURCE 
-    anonymize.cpp
-    stripDataset.cpp
-    stripDataset.h
-    utils.h
-    utils.cpp
+    ${CMAKE_SOURCE_DIR}/src/anonymize.cpp
+    ${CMAKE_SOURCE_DIR}/src/stripDataset.cpp
+    ${CMAKE_SOURCE_DIR}/src/stripDataset.h
+    ${CMAKE_SOURCE_DIR}/src/utils.h
+    ${CMAKE_SOURCE_DIR}/src/utils.cpp
     )
 
 if (WA_BUILD)
@@ -216,7 +218,7 @@ if (WA_BUILD)
   add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/library.c"
       COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/library.c" ""
-      DEPENDS "${CMAKE_SOURCE_DIR}/library.js")
+      DEPENDS "${CMAKE_SOURCE_DIR}/src/library.js")
 
   add_executable(${PROJECT_NAME} ${SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/library.c)
 
@@ -226,15 +228,22 @@ if (WA_BUILD)
     DESTINATION ${CMAKE_SOURCE_DIR}/dist
     )
 
-  install(FILES
-    ${CMAKE_SOURCE_DIR}/index.html
-    ${CMAKE_SOURCE_DIR}/style.css
-    ${CMAKE_SOURCE_DIR}/wrap.js
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.js
-    DESTINATION ${CMAKE_SOURCE_DIR}/dist
-    )
-else()
+  # installation
+  macro(copy_file_ex SRC_DIR FILE)
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${SRC_DIR}/${FILE}
+            ${TARGET_DIRECTORY}/${FILE})
+  endmacro()
+
+  copy_file_ex(${CMAKE_SOURCE_DIR}/src index.html)
+  copy_file_ex(${CMAKE_SOURCE_DIR}/src style.css)
+  copy_file_ex(${CMAKE_SOURCE_DIR}/src wrap.js)
+  copy_file_ex(${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_NAME}.wasm)
+  copy_file_ex(${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_NAME}.js)
+
+ else()
   # c++ native target build
   set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${OUTPUTCONFIG}/lib )
   set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${OUTPUTCONFIG}/lib )
@@ -242,7 +251,7 @@ else()
 
   add_subdirectory(tests)
   add_library(cpplib ${SOURCE})
-  add_executable(${PROJECT_NAME} main.cpp)
+  add_executable(${PROJECT_NAME} src/main.cpp)
   target_link_libraries(${PROJECT_NAME} cpplib dcmtk)
 endif()
 

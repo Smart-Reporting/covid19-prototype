@@ -11,5 +11,4 @@ cd build \
     && cmake .. -DCMAKE_TOOLCHAIN_FILE="$TOOL_CHAIN_PATH" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/src/DICOMAnonymizer/dist \
-    && cmake --build . \
-    && cmake --install .
+    && cmake --build .
