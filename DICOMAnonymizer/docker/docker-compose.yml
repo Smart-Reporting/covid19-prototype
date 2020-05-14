@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+
+  orthanc:
+    container_name: orthanc
+    image: jodogne/orthanc
+    ports:
+      - 4242:4242
+      - 8042:8042
+    restart: always
+
+  nginx:
+    container_name: nginx
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - orthanc
+    restart: always
+
+  web:
+    container_name: web
+    image: nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ../dist:/usr/share/nginx/html  
