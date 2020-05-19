@@ -8,7 +8,7 @@
 #include <dcmtk/dcmdata/dcdeftag.h>
 
 extern "C" void addTagJS(const char* parentHtmlTag, const char* tag, bool confidential);
-extern "C" void showErrorMessageJS(const char* errorMessage);
+//extern "C" void showErrorMessageJS(const char* errorMessage);
 
 
 // Loop over the tags contained in a DICOM dataset, convert them as
@@ -60,7 +60,8 @@ static void showErrorMessage(
     const char* errorMessage // error message
     )
 {
-    showErrorMessageJS(errorMessage);
+    std::cout << "Error:" << errorMessage << std::endl;
+    //showErrorMessageJS(errorMessage);
 }
 
 // Prints all DICOM tags of a DICOM dataset to a WEB page
